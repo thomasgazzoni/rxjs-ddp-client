@@ -1,10 +1,9 @@
 [![Build Status](https://travis-ci.org/thomasgazzoni/rxjs-ddp-client.svg?branch=master)](https://travis-ci.org/thomasgazzoni/rxjs-ddp-client)
-[![npm version](https://badge.fury.io/js/open-ddp-client.svg)](https://badge.fury.io/js/open-ddp-client)
-[![npm](https://img.shields.io/npm/dm/open-ddp-client.svg)](https://www.npmjs.com/package/open-ddp-client)
+[![npm version](https://badge.fury.io/js/rxjs-ddp-client.svg)](https://badge.fury.io/js/rxjs-ddp-client)
+[![npm](https://img.shields.io/npm/dm/rxjs-ddp-client.svg)](https://www.npmjs.com/package/rxjs-ddp-client)
 [![bitHound Overall Score](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client/badges/score.svg)](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client)
 [![bitHound Dependencies](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client/badges/dependencies.svg)](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client/master/dependencies/npm)
 [![bitHound Code](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client/badges/code.svg)](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client)
-[![Gratipay Tips](https://img.shields.io/gratipay/shantanubhadoria.svg)](https://gratipay.com/shantanubhadoria)
 
 # rxjs-ddp-client
 This is a simple WebSocket library for realtime data like Chats, Notification, etc based on DDP protocol:
@@ -90,9 +89,8 @@ npm install thomasgaz/rxjs-ddp-client
  - Write Tests
 
 ## Thanks
-
-Thanks to **oortcloud** for the node-ddp-client which formed the inspiration for this code.
-Thanks to **yjmade** for the improved Django DDP server library
+ - Thanks to **oortcloud** for the node-ddp-client which formed the inspiration for this code.
+ - Thanks to **yjmade** for the improved Django DDP server library
 
 License
 ----
