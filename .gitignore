@@ -1,0 +1,7 @@
+coverage/
+node_modules/
+npm-debug.log
+typings/
+lib/
+*.js
+*.d.ts
