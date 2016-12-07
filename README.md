@@ -19,7 +19,9 @@ Thi library works well together with:
  - Usign customizable storage system, not MiniMongo or MiniMongoChange dependencies required
  - Access to collection's data by simple subscribe to Observable allowing to use RxJs operators (no need MiniMongoDb query, etc)
 
-## How it works
+## Usage Exemple
+
+ - Create a custom DDP class for your app logic
 
 ```Typescript
 import { DDPClient } from "rxjs-ddp-client";
@@ -30,16 +32,18 @@ export class MyDDPClient extends DDPClient {
         super();
     }
 
+    initCacheStorage(cacheEngine: DDPCacheEngine) {
+        this.ddpStorage.setCacheEngine(cacheEngine);
+        this.ddpStorage.loadFromCache(CACHEABLE_COLLECTIONS);
+    }
+
     connect() {
         const ddpServerUrl = 'ws://localhost:3000/websocket';
         super.connect(ddpServerUrl);
     }
 
-    login(sessionId: string) {
-        const params = {
-            ftsession: sessionId
-        };
-        return this.call('login', [params]);
+    login() {
+        return this.call('login');
     }
 
     logout() {
@@ -62,6 +66,12 @@ export class MyDDPClient extends DDPClient {
 
     onConnected() {
         // DDP connected
+
+        this.login()
+            .then(() => {
+                this.subscribePubblications();
+                this.observeMyCollections();
+            });
     }
 
     onSocketError(error) {
@@ -70,12 +80,20 @@ export class MyDDPClient extends DDPClient {
 
     onSocketClosed() {
         // WebSocket closed
+        // TODO: handle reconnect login in here
     }
 
     onMessage(data) {
-        // DDP message received (for custom handling)
+        // DDP message received (for handle server custom messages)
     }
 }
+
+ - Initialize your custom DDP class in your app main entry point
+
+const myDDPClient = new MyDDPClient();
+
+myDDPClient.setCacheEngine(localForage); // If you use Ionic2 you can use Storage straight away ( import { Storage } from 'ionic-storage'; )
+myDDPClient.connect();
 
 ```
 
@@ -90,7 +108,7 @@ npm install thomasgaz/rxjs-ddp-client
 
 ## Thanks
  - Thanks to **oortcloud** for the node-ddp-client which formed the inspiration for this code.
- - Thanks to **yjmade** for the improved Django DDP server library
+ - Thanks to **yjmade** for the Django/PostgreSQL implementation of the Meteor server.
 
 License
 ----
