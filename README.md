@@ -87,14 +87,15 @@ export class MyDDPClient extends DDPClient {
         // DDP message received (for handle server custom messages)
     }
 }
+```
 
  - Initialize your custom DDP class in your app main entry point
 
+```Typescript
 const myDDPClient = new MyDDPClient();
 
 myDDPClient.setCacheEngine(localForage); // If you use Ionic2 you can use Storage straight away ( import { Storage } from 'ionic-storage'; )
 myDDPClient.connect();
-
 ```
 
 ## Install
