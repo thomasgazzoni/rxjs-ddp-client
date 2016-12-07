@@ -24,7 +24,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "clean": "./scripts/clean.sh",
+    "clean": "rimraf node_modules && rimraf lib",
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
     "build": "npm run clean && npm install && npm run lint && echo Using TypeScript && tsc --version && tsc --pretty",
     "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "ejson": "2.1.2",
-    "rxjs": "5.0.0-rc.1",
+    "rxjs": "5.0.0-rc.5",
     "underscore": "1.8.3"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "mocha": "^3.1.2",
     "rimraf": "^2.5.4",
     "ts-node": "^1.2.2",
-    "tslint": "3.15.1",
+    "tslint": "^4.0.2",
     "typescript": "2.0.3"
   },
   "engines": {
