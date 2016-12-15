@@ -1,54 +1,53 @@
 {
-  "name": "rxjs-ddp-client",
-  "version": "1.0.0",
-  "description": "rxjs-ddp-client",
-  "license": "MIT",
-  "homepage": "https://github.com/thomasgazzoni/rxjs-ddp-client#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/thomasgazzoni/rxjs-ddp-client.git"
-  },
-  "bugs": {
-    "url": "https://github.com/thomasgazzoni/rxjs-ddp-client/issues"
-  },
-  "author": "Thomas Gazzoni",
-  "keywords": [
-    "DDP",
-    "Meteor",
-    "RxJs",
-    "Angular2"
-  ],
-  "files": [
-    "lib"
-  ],
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
-  "scripts": {
-    "clean": "rimraf node_modules && rimraf lib",
-    "lint": "tslint --force --format verbose \"src/**/*.ts\"",
-    "build": "npm run clean && npm install && npm run lint && echo Using TypeScript && tsc --version && tsc --pretty",
-    "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
-    "watch": "npm run build -- --watch",
-    "watch:test": "npm run test -- --watch"
-  },
-  "dependencies": {
-    "ejson": "2.1.2",
-    "rxjs": "5.0.0-rc.5",
-    "underscore": "1.8.3"
-  },
-  "devDependencies": {
-    "@types/chai": "3.4.34",
-    "@types/ejson": "2.1.2",
-    "@types/mocha": "2.2.32",
-    "@types/underscore": "1.7.36",
-    "chai": "^3.5.0",
-    "mocha": "^3.1.2",
-    "rimraf": "^2.5.4",
-    "ts-node": "^1.2.2",
-    "tslint": "^4.0.2",
-    "typescript": "2.0.3"
-  },
-  "engines": {
-    "node": ">=4.0.0"
-  }
+    "name": "rxjs-ddp-client",
+    "version": "1.1.0",
+    "description": "RxJs DDP client based on node-ddp-client in Typescript (no meteor required)",
+    "license": "MIT",
+    "homepage": "https://github.com/thomasgazzoni/rxjs-ddp-client#readme",
+    "author": "Thomas Gazzoni <thomas.gazzoni@gmail.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/thomasgazzoni/rxjs-ddp-client.git"
+    },
+    "bugs": {
+        "url": "https://github.com/thomasgazzoni/rxjs-ddp-client/issues"
+    },
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "typings": "./dist/index.d.ts",
+    "keywords": [
+        "DDP",
+        "Meteor",
+        "RxJs",
+        "Angular2"
+    ],
+    "scripts": {
+        "clean": "rimraf node_modules && rimraf dist",
+        "lint": "tslint --force --format verbose \"src/**/*.ts\"",
+        "build": "./node_modules/.bin/tsc --pretty",
+        "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
+        "watch": "npm run build -- --watch",
+        "watch:test": "npm run test -- --watch",
+        "prepublish": "npm run build"
+    },
+    "dependencies": {
+        "ejson": "2.1.2",
+        "rxjs": "5.0.0-rc.5",
+        "underscore": "1.8.3",
+        "@types/ejson": "2.1.2",
+        "@types/underscore": "1.7.36"
+    },
+    "devDependencies": {
+        "@types/chai": "3.4.34",
+        "@types/mocha": "2.2.32",
+        "chai": "^3.5.0",
+        "mocha": "^3.2.0",
+        "rimraf": "^2.5.4",
+        "ts-node": "^1.7.2",
+        "tslint": "^4.0.0",
+        "typescript": "2.1.4"
+    },
+    "engines": {
+        "node": ">=4.0.0"
+    }
 }

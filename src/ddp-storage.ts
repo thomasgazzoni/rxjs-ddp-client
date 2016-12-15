@@ -1,12 +1,13 @@
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/operator/take';
 
 import { DDP_COLLECTIONS } from './ddp-names';
 
 export declare abstract class DDPCacheEngine {
-    abstract get(key: string): Promise<any>;
-    abstract set(key: string, value: any): void;
-    abstract remove(key: string): void;
+    abstract get(key: string): Observable<any>;
+    abstract set(key: string, value: any);
+    abstract remove(key: string);
 }
 
 const STORAGE_KEY_LAST_SYNC_TIME = 'last_sync_time';
@@ -41,7 +42,8 @@ export class DDPStorage {
         this._cacheEngine = cacheEngine;
 
         this._cacheEngine.get(STORAGE_KEY_LAST_SYNC_TIME)
-            .then(data => this._lastSyncTime = data);
+            .take(1)
+            .subscribe(data => this._lastSyncTime = data);
     }
 
     loadFromCache(collectionsNames: Array<DDP_COLLECTIONS>) {
@@ -51,12 +53,9 @@ export class DDPStorage {
             this._checkAndInitCollection(collectionName);
 
             this._cacheEngine.get(collectionName)
-                .then(data => {
+                .take(1)
+                .subscribe(data => {
                     this._collections[collectionName] = data || [];
-                    this._subjects[collectionName].next(this._collections[collectionName]);
-                })
-                .catch(error => {
-                    this._collections[collectionName] = [];
                     this._subjects[collectionName].next(this._collections[collectionName]);
                 });
 

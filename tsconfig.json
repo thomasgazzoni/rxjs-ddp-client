@@ -1,27 +1,29 @@
 {
     "compilerOptions": {
+        "target": "es5",
+        "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
-        "declaration": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
+        "sourceMap": true,
+        "noEmitHelpers": false,
+        "noImplicitAny": false,
+        "declaration": true,
+        "skipLibCheck": true,
+        "stripInternal": true,
         "lib": [
-            "dom",
-            "es2015"
+            "es6",
+            "dom"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "target": "es5",
-        "outDir": "./lib"
+        "rootDir": ".",
+        "outDir": "./dist",
+        "typeRoots": [
+            "./node_modules/@types"
+        ]
     },
-    "include": [
-        "src/**/*"
-    ],
     "exclude": [
-        "**/*-spec.ts",
-        "node_modules"
-    ],
-    "compileOnSave": false,
-    "atom": {
-        "rewriteTsconfig": false
-    }
+        "node_modules",
+        "bundles",
+        "dist"
+    ]
 }

@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/Observable';
 import EJSON from 'ejson';
 import _ from 'underscore';
 import { DDPStorage } from './ddp-storage';
+
 import { DDP_COLLECTIONS } from './ddp-names';
 
 export declare abstract class OnDDPMessage {
@@ -12,8 +13,8 @@ export declare abstract class OnDDPConnected {
     abstract onConnected(): void;
 }
 
-export declare abstract class OnDDPFailed {
-    abstract onFailed(): void;
+export declare abstract class OnDDPDisconnected {
+    abstract onDisconnected(): void;
 }
 
 export declare abstract class OnSocketClosed {
@@ -25,17 +26,20 @@ export declare abstract class OnSocketError {
 }
 
 export interface IDDPClientSettings {
+    url?: string;
     host?: string;
     port?: number;
     ssl?: boolean;
     path?: string;
     ddpVersion?: string;
     socketContructor?: any;
+    pingInterval: number;
+    reconnectInterval: number;
 }
 
 const SUPPORTED_DDP_VERSIONS = ['1', 'pre2', 'pre1'];
 
-export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnSocketClosed, OnSocketError {
+export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnected, OnSocketClosed, OnSocketError {
 
     protected _isConnecting: boolean;
     protected _isConnected: boolean;
@@ -52,17 +56,28 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnS
     protected ddpStorage: DDPStorage;
     protected socketConstructor: WebSocket | any;
 
+    protected pingInterval: number;
+    protected reconnectTimeout: number;
+
+    protected reconnectStatus: {
+        attempt: number;
+        nextDelay: number;
+    };
+
     constructor(ddpSettings?: IDDPClientSettings) {
 
         // default settings
         this.ddpSettings = Object.assign({}, ddpSettings, {
+            url: undefined,
             host: 'localhost',
             port: 3000,
             path: 'websocket',
             ssl: false,
             ddpVersion: '1',
-            socketContructor: WebSocket
-        });
+            socketContructor: WebSocket,
+            pingInterval: 30000,
+            reconnectInterval: 30000,
+        } as IDDPClientSettings);
 
         this.ddpStorage = new DDPStorage();
 
@@ -74,51 +89,85 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnS
         this._callbacks = {};
         this._updatedCallbacks = {};
         this._pendingMethods = {};
+        this.reconnectStatus = {
+            attempt: 0,
+            nextDelay: 0,
+        };
     }
 
-    // Events that parent can attach to
+    ///// Events that parent can attach to /////
+
+    /**
+     * Fired when socket had and error
+     */
     onSocketError(error) {
 
     }
 
+    /**
+     * Fired when socket close
+     */
     onSocketClosed(event) {
 
     }
 
+    /**
+     * Fired when socket received a message
+     * @param {EJSON} data message data in EJSON format
+     */
     onMessage(data) {
 
     }
 
+    /**
+     * Fired when respond with "connected" message
+     * @param {EJSON} EJSON data
+     */
     onConnected() {
 
     }
 
-    onFailed() {
+    /**
+     * Just for nofity errors. Fired when socket get an error or DDP server connection failed
+     * @param {string} reason Error/reason of the exception
+     */
+    onFailed(reason) {
+
+    }
+
+    /**
+     * Fired when DDP become unusable (socket close, ddp do not respond, handshake failed)
+     */
+    onDisconnected() {
 
     }
 
     //////////////////////////////////////////////////////////////////////////
 
-    /*
-     * Open the connection to the server
-     * if Url is provided, we connect directily to the url instead of using the DDPClientSettings
+    /**
+     * Open a WebSocket connection to the server (if not already open or in progress)
+     * Fire the onConnected when server respond with "connected"
+     * @param {string} url if Url is provided, we connect directily to the url instead of using the DDPClientSettings
      */
     connect(url = undefined) {
+
+        if (this._isConnecting || this._isConnected) {
+            // DDP already connected or connecting, skip
+            console.info('DDP connect() called more then once: isConnecting',
+                this._isConnecting, ' - isConnected', this._isConnected);
+            return;
+        }
 
         this._isConnecting = true;
         this._isConnected = false;
         this._isClosed = false;
 
-        const webSocketUrl = url || this._createUrlFromSettings();
+        this.ddpSettings.url = this.ddpSettings.url || url || this._createUrlFromSettings();
 
-        if (this.socket) {
-            delete this.socket;
-        }
-
-        this.socket = new this.ddpSettings.socketContructor(webSocketUrl);
+        this.socket = new this.ddpSettings.socketContructor(this.ddpSettings.url);
 
         this.socket.onopen = () => {
-            // just go ahead and open the "connection" on connect
+            // When socket open, send DDP "connect" message
             this._send({
                 msg: 'connect',
                 version: this.ddpSettings.ddpVersion,
@@ -130,18 +179,16 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnS
             // error received before connection was established
             if (this._isConnecting) {
                 this._failed('Socket error happened before the connection', error);
+            } else {
+                this._failed(error.message);
             }
-
+            this.disconnect(true); // disconnect and close the socket
             this.onSocketError(error);
         };
 
         this.socket.onclose = (event) => {
-            this._isConnecting = false;
-            this._isConnected = false;
-            this._isClosed = true;
-
             this._endPendingMethodCalls();
-
+            this.disconnect(true);
             this.onSocketClosed(event);
         };
 
@@ -150,18 +197,49 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnS
         };
     }
 
-    close() {
+    /**
+     * Close the WebSocket (if not already close)
+     * Fire the onDisconnected in any case
+     */
+    disconnect(needToReconnect = false) {
+
+        if (needToReconnect === false) {
+            clearTimeout(this.reconnectTimeout);
+        }
+
+        if (this._isClosed) {
+            // Socket already close, skip
+            console.info('DDP disconnect() called more then once: socket already closed')
+            return;
+        }
 
         this._isConnecting = false;
         this._isConnected = false;
         this._isClosed = true;
 
+        this.close();
+
+        this._disconnected(needToReconnect);
+    }
+
+    /**
+     * If a there is a WebSocket instance and is not CLOSED, call the socket.close() method
+     * Reset also the onclose and onerror callbacks to avoid multiple disconnect() calls
+     */
+    close() {
+
         if (this.socket) {
+
             this.socket.onclose = () => { };
             this.socket.onerror = () => { };
+
+            console.debug('this.socket.readyState ', this.socket.readyState,  this.socket.CLOSED )
+
             if (this.socket.readyState !== this.socket.CLOSED) {
-                this.socket.close(4000, 'safely_close');
+                this.socket.close();
             }
+
+            delete this.socket;
         }
     }
 
@@ -445,23 +523,68 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPFailed, OnS
     // handle DDP connected (ddp msg received from Server)
     private _connected() {
 
-        if (this.socket.readyState === this.socket.CLOSED) {
-            console.warn('Socket not stable, wait for socket to connect or fail');
-        } else {
-            this._isConnecting = false;
-            this._isConnected = true;
-            this._isClosed = false;
-            this.onConnected();
+        this._isConnecting = false;
+        this._isConnected = true;
+        this._isClosed = false;
+
+        this.reconnectStatus = {
+            attempt: 0,
+            nextDelay: 0,
+        };
+
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
         }
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+        }
+
+        this.pingInterval = setInterval(
+            () => this.ping(),
+            this.ddpSettings.pingInterval) as any;
+
+        this.onConnected();
     }
 
-    // handle DDP failed to connect (msg refuse from Server)
-    private _failed(errorMessage, exception = undefined) {
+    private _disconnected(needToReconnect: boolean) {
+
         this._isConnecting = false;
         this._isConnected = false;
         this._isClosed = true;
 
-        this.onFailed();
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+        }
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+        }
+
+        if (needToReconnect) {
+            this.reconnectStatus.attempt = this.reconnectStatus.attempt + 1;
+            this.reconnectStatus.nextDelay = this.reconnectStatus.attempt * 5000;
+            console.debug('DDP needToReconnect', this.reconnectStatus);
+            this.reconnectTimeout = setTimeout(() => {
+                console.debug('DDP needToReconnect setTimeout', this.reconnectStatus);
+
+                this.connect();
+                clearTimeout(this.reconnectTimeout);
+            }, this.ddpSettings.reconnectInterval + this.reconnectStatus.nextDelay) as any;
+        } else {
+            this.reconnectStatus.attempt = 0;
+            this.reconnectStatus.nextDelay = 0;
+        }
+
+        this.onDisconnected();
+    }
+
+    /**
+     * Fire the onFailed every time eather the socket drop (error) or the handshake wih DDP failed
+     */
+    private _failed(errorMessage, exception = undefined) {
+
+        this.onFailed(errorMessage);
     }
 
     private _notifySendFail(id) {

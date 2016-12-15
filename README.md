@@ -16,8 +16,8 @@ Thi library works well together with:
 
 ## Difference with Oortcloud/node-ddp-client
  - Code rewrite using ES6 and Typescript (add typings and interfaces)
- - Usign customizable storage system, not MiniMongo or MiniMongoChange dependencies required
- - Access to collection's data by simple subscribe to Observable allowing to use RxJs operators (no need MiniMongoDb query, etc)
+ - Usign customizable storage system (MiniMongo or MiniMongoCache dependencies are NOT required)
+ - Access to collection's data by simple subscribing to Observable (just use RxJs operators (map, filter, etc) for querying)
 
 ## Usage Exemple
 
@@ -34,7 +34,7 @@ export class MyDDPClient extends DDPClient {
 
     initCacheStorage(cacheEngine: DDPCacheEngine) {
         this.ddpStorage.setCacheEngine(cacheEngine);
-        this.ddpStorage.loadFromCache(CACHEABLE_COLLECTIONS);
+        this.ddpStorage.loadFromCache(['MyCollectionA']);
     }
 
     connect() {

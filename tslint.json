@@ -35,7 +35,6 @@
     "no-any": false,
     "no-reference": false,
     "no-duplicate-variable": true,
-    "no-duplicate-key": true,
     "no-inferrable-types": true,
     "no-eval": true,
     "no-arg": true,
