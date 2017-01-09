@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
-import EJSON from 'ejson';
-import _ from 'underscore';
+import * as EJSON from 'ejson';
+import * as _ from 'underscore';
 import { DDPStorage } from './ddp-storage';
 
 import { DDP_COLLECTIONS } from './ddp-names';
