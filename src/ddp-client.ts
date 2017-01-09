@@ -33,8 +33,8 @@ export interface IDDPClientSettings {
     path?: string;
     ddpVersion?: string;
     socketContructor?: any;
-    pingInterval: number;
-    reconnectInterval: number;
+    pingInterval?: number;
+    reconnectInterval?: number;
 }
 
 const SUPPORTED_DDP_VERSIONS = ['1', 'pre2', 'pre1'];
@@ -93,53 +93,6 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
             attempt: 0,
             nextDelay: 0,
         };
-    }
-
-    ///// Events that parent can attach to /////
-
-    /**
-     * Fired when socket had and error
-     */
-    onSocketError(error) {
-
-    }
-
-    /**
-     * Fired when socket close
-     */
-    onSocketClosed(event) {
-
-    }
-
-    /**
-     * Fired when socket received a message
-     * @param {EJSON} data message data in EJSON format
-     */
-    onMessage(data) {
-
-    }
-
-    /**
-     * Fired when respond with "connected" message
-     * @param {EJSON} EJSON data
-     */
-    onConnected() {
-
-    }
-
-    /**
-     * Just for nofity errors. Fired when socket get an error or DDP server connection failed
-     * @param {string} reason Error/reason of the exception
-     */
-    onFailed(reason) {
-
-    }
-
-    /**
-     * Fired when DDP become unusable (socket close, ddp do not respond, handshake failed)
-     */
-    onDisconnected() {
-
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -233,9 +186,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
             this.socket.onclose = () => { };
             this.socket.onerror = () => { };
 
-            console.debug('this.socket.readyState ', this.socket.readyState,  this.socket.CLOSED )
-
-            if (this.socket.readyState !== this.socket.CLOSED) {
+            if (this.socket.readyState !== WebSocket.CLOSED) {
                 this.socket.close();
             }
 
@@ -250,6 +201,54 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
         });
     }
 
+
+    ///// Events that parent can attach to /////
+
+    /**
+     * Fired when socket had and error
+     */
+    public onSocketError(error) {
+
+    }
+
+    /**
+     * Fired when socket close
+     */
+    public onSocketClosed(event) {
+
+    }
+
+    /**
+     * Fired when socket received a message
+     * @param {EJSON} data message data in EJSON format
+     */
+    public onMessage(data) {
+
+    }
+
+    /**
+     * Fired when respond with "connected" message
+     * @param {EJSON} EJSON data
+     */
+    public onConnected() {
+
+    }
+
+    /**
+     * Just for nofity errors. Fired when socket get an error or DDP server connection failed
+     * @param {string} reason Error/reason of the exception
+     */
+    public onFailed(reason) {
+
+    }
+
+    /**
+     * Fired when DDP become unusable (socket close, ddp do not respond, handshake failed)
+     */
+    public onDisconnected() {
+
+    }
+
     /**
      * @whatItDoes call a method on the server
      * @description
@@ -258,7 +257,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
      * @param {Function} callback called with the result when the server respond RESULT
      * @param {Function} updatedCallback called when the server respond UPDATE
      */
-    protected call(name: string, params, callback: Function, updatedCallback: Function) {
+    protected call(name: string, params, callback: Function, updatedCallback?: Function) {
 
         const id = this._getNextId();
 
@@ -291,6 +290,21 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
         if (!sendStatus) {
             this._notifySendFail(id);
         }
+
+        return sendStatus;
+    }
+
+    protected callWithPromise(name: string, params) {
+
+        return new Promise((resolve, reject) => {
+            this.call(name, params, (error, result) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
     }
 
     protected callWithRandomSeed(name: string, params, randomSeed, callback, updatedCallback) {
@@ -322,12 +336,12 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
      * open a subscription on the server,
      * callback should handle on ready and nosub
      */
-    protected subscribe(name: string, params, callback) {
+    protected subscribe(name: string, params, unsubscribeCallback?: Function) {
 
         const id = this._getNextId();
 
-        if (callback) {
-            this._callbacks[id] = callback;
+        if (unsubscribeCallback) {
+            this._callbacks[id] = unsubscribeCallback;
         }
 
         const sendStatus = this._send({
@@ -373,7 +387,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
     // handle send msg via WebSocket
     private _send(data) {
 
-        if (!this.socket || this.socket.readyState !== this.socket.OPEN) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.info('DDP connection is not yet open, Cannot call', data);
             return false;
         }
@@ -564,10 +578,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
         if (needToReconnect) {
             this.reconnectStatus.attempt = this.reconnectStatus.attempt + 1;
             this.reconnectStatus.nextDelay = this.reconnectStatus.attempt * 5000;
-            console.debug('DDP needToReconnect', this.reconnectStatus);
             this.reconnectTimeout = setTimeout(() => {
-                console.debug('DDP needToReconnect setTimeout', this.reconnectStatus);
-
                 this.connect();
                 clearTimeout(this.reconnectTimeout);
             }, this.ddpSettings.reconnectInterval + this.reconnectStatus.nextDelay) as any;

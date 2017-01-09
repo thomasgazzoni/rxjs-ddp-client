@@ -6,7 +6,7 @@
 [![bitHound Code](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client/badges/code.svg)](https://www.bithound.io/github/thomasgazzoni/rxjs-ddp-client)
 
 # rxjs-ddp-client
-This is a simple WebSocket library for realtime data like Chats, Notification, etc based on DDP protocol:
+This is a simple WebSocket library for realtime app like Chats, Notification, etc based on DDP protocol powered by RXjs
  - use Meteor-DDP protocol (without the need of Meteor Client) to connect to any Server supporting DDP protocol.
  - use RxJs to handle the collection items in Streams
  - customizable Cache options to persist and load data from cache
@@ -16,92 +16,145 @@ Thi library works well together with:
 
 ## Difference with Oortcloud/node-ddp-client
  - Code rewrite using ES6 and Typescript (add typings and interfaces)
- - Usign customizable storage system (MiniMongo or MiniMongoCache dependencies are NOT required)
- - Access to collection's data by simple subscribing to Observable (just use RxJs operators (map, filter, etc) for querying)
+ - Usign customizable storage system (minimongo-db or minimongo-cache dependencies are NOT required)
+ - Access to collection's data by simple subscribe to Observable and use RxJs operators (map, zip, filter, etc) for querying
 
 ## Usage Exemple
 
  - Create a custom DDP class for your app logic
 
-```Typescript
-import { DDPClient } from "rxjs-ddp-client";
+```ts
+// my-ddp-client.ts
+import { Observable } from 'rxjs';
+import { DDPClient } from '../src/ddp-client';
+import { DDPCacheEngine } from '../src/ddp-storage';
+
+export type MY_DDP_COLLECTIONS = 'users' | 'chats';
+export const MY_DDP_COLLECTIONS = {
+    USERS: 'users' as MY_DDP_COLLECTIONS,
+    CHATS: 'chats' as MY_DDP_COLLECTIONS,
+};
+
+export interface IUser {
+    _id: string;
+    full_name: string;
+    email: string;
+}
 
 export class MyDDPClient extends DDPClient {
 
+    public ddpStatus: {
+        isConnected: boolean;
+        isDisconnected: boolean;
+    };
+
     constructor() {
         super();
+
+        this.ddpStatus = {
+            isConnected: false,
+            isDisconnected: true,
+        };
     }
 
     initCacheStorage(cacheEngine: DDPCacheEngine) {
+
         this.ddpStorage.setCacheEngine(cacheEngine);
-        this.ddpStorage.loadFromCache(['MyCollectionA']);
+        this.ddpStorage.loadFromCache([MY_DDP_COLLECTIONS.CHATS]);
     }
 
     connect() {
-        const ddpServerUrl = 'ws://localhost:3000/websocket';
+        const ddpServerUrl = 'ws://localhost:8080';
         super.connect(ddpServerUrl);
     }
 
     login() {
-        return this.call('login');
+        return this.callWithPromise('login', {
+            username: 'xxx',
+            password: 'xxx'
+        });
     }
 
     logout() {
-        this.ddpStorage.clearCache(['MyCollectionA']);
+        this.ddpStorage.clearCache([MY_DDP_COLLECTIONS.CHATS]);
         super.close();
     }
 
-    subscribePubblications() {
-        const since = this.ddpStorage.lastSyncTime;
-        this.subscribe('myPublicationA', [since]);
-        this.subscribe('myPublicationB', [since]);
-    }
-
-    observeMyCollections() {
-        this.observeCollection<IUser[]>('MyCollectionA')
-            .subscribe(items => console.log('MyCollectionA item:', item));
-    }
-
     // Events called by DDPClient
-
     onConnected() {
-        // DDP connected
+        // DDP connected, now we can login and subscribe to the publications on the server
+
+        this.ddpStatus.isConnected = true;
+        this.ddpStatus.isDisconnected = false;
 
         this.login()
             .then(() => {
-                this.subscribePubblications();
-                this.observeMyCollections();
+                this.subscribePublications();
+                this.observeCollections();
             });
     }
 
+    onDisconnected() {
+        // DDP disconnected, notify user
+
+        this.ddpStatus.isConnected = true;
+        this.ddpStatus.isDisconnected = false;
+    }
+
     onSocketError(error) {
-        // Socket error
+        // Custom code on Socket error
     }
 
     onSocketClosed() {
-        // WebSocket closed
-        // TODO: handle reconnect login in here
+        // Custom code on Socket closed
     }
 
     onMessage(data) {
-        // DDP message received (for handle server custom messages)
+        // Custom code for handle special DDP server messages
+    }
+
+    // Custom utility methos
+    subscribePublications() {
+        const since = this.ddpStorage.lastSyncTime;
+        this.subscribe('users', [since]);
+        this.subscribe('chats', [since]);
+    }
+
+    observeCollections() {
+        this.observeCollection<IUser[]>(MY_DDP_COLLECTIONS.USERS)
+            .subscribe(items => console.log('Users:', items));
+    }
+
+    getAllCollectionData$(collectionName: MY_DDP_COLLECTIONS) {
+        // To access data direcly from the collection you can use the ddpStorage methods
+        return this.ddpStorage.getObservable(collectionName);
     }
 }
 ```
 
  - Initialize your custom DDP class in your app main entry point
 
-```Typescript
+```ts
+import { DDPCacheEngine } from 'rxjs-ddp-client';
+import { MyDDPClient } from './my-ddp-client';
+
 const myDDPClient = new MyDDPClient();
 
-myDDPClient.setCacheEngine(localForage); // If you use Ionic2 you can use Storage straight away ( import { Storage } from 'ionic-storage'; )
+// OPTION 1: Wrapper of LocalForage or any storage using Observable (methods must match to DDPCacheEngine interface)
+const _storageService : DDPCacheEngine = new MyLocalForageWrapper();
+
+// OPTION 2: if you use Angular 2 you could consider useing the StorageService of ng2-platform ([see ng2-platform repo](https://github.com/thomasgazzoni/ng2-platform))
+const _storageService : DDPCacheEngine = this._storageService;
+
+
+myDDPClient.setCacheEngine(_storageService);
 myDDPClient.connect();
 ```
 
 ## Install
 
 ```sh
-npm install thomasgaz/rxjs-ddp-client
+npm install rxjs-ddp-client
 ```
 
 ## Todos
