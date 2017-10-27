@@ -139,25 +139,62 @@ export class MyDDPClient extends DDPClient {
 }
 ```
 
+ - rxjs-ddp-client comes with cache out of the box. To keep things flexible, you can use any cache system by implementing a class that has the methods required by ***DDPCacheEngine***.
+ For example if you chose to use LocalStorage you need a class like this:
+
+ ```ts
+ // my-ddp-cache-engine.ts
+import { Observable } from 'rxjs/Observable';
+import { DDPCacheEngine } from 'rxjs-ddp-client';
+import 'rxjs/add/observable/of';
+
+export class MyDDPCacheEngine implements DDPCacheEngine {
+
+  constructor() {
+  }
+
+  getItem(keyName: string) {
+
+    return Observable
+      .of(localStorage.getItem(keyName));
+  }
+
+  setItem(keyName: string, value: any) {
+
+    return Observable
+      .of(localStorage.setItem(keyName, value));
+  }
+
+  removeItem(keyName: string) {
+
+    return Observable
+      .of(localStorage.removeItem(keyName));
+  }
+}
+
+ ```
+
  - Ultimatly you can initialize your custom DDP client in your app main entry point
 
 
 VanillaJS
 
 ```ts
+// app.ts
 import { DDPCacheEngine } from 'rxjs-ddp-client';
 import { MyDDPClient } from 'rxjs-ddp-client';
+import { MyDDPCacheEngine } from './my-ddp-cache-engine';
 
 const myDDPClient = new MyDDPClient();
 
 // OPTION 1: Wrapper of LocalForage or any storage using Observable (methods must match to DDPCacheEngine interface)
-// const _storageService : DDPCacheEngine = new MyLocalForageWrapper();
+// const _storageService = new MyLocalForageWrapper();
 
 // OPTION 2: if you use Angular 2 you could consider using the StorageService of ng2-platform ([see ng2-platform repo](https://github.com/thomasgazzoni/ng2-platform))
-// const _storageService : DDPCacheEngine = this._storageService;
+// const _storageService = this._storageService; // Need to declare StorageService in the constructor
 
-// OPTION 3: use the localStorage of the browser direclty
-const _storageService : DDPCacheEngine = localStorage;
+// OPTION 3: use the browser localStorage (usign the example file my-ddp-cache-engine.ts above)
+const _storageService = MyDDPCacheEngine;
 
 
 myDDPClient.setCacheEngine(_storageService);
@@ -166,9 +203,10 @@ myDDPClient.connect();
 
 Angular 2+
 ```ts
+// app.component.ts
 import { Component } from '@angular/core';
-import { DDPCacheEngine } from 'rxjs-ddp-client';
 import { MyDDPClient } from './my-ddp-client';
+import { MyDDPCacheEngine } from './my-ddp-cache-engine';
 
 @Component({
   selector: 'app-root',
@@ -186,13 +224,13 @@ export class AppComponent {
   init() {
 
     const myDDPClient = new MyDDPClient();
+    const myDDPCacheEngine = new MyDDPCacheEngine();
 
-    const _storageService: DDPCacheEngine = localStorage;
-
-    myDDPClient.initCacheStorage(_storageService);
+    myDDPClient.initCacheStorage(myDDPCacheEngine);
     myDDPClient.connect();
   }
 }
+
 
 ```
 
