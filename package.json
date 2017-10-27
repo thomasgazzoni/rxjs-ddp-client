@@ -28,11 +28,11 @@
         "test": "rimraf dist && npm run build && ava",
         "watch": "npm run build -- --watch",
         "watch:test": "npm run test -- --watch",
-        "prepublish": "npm run build"
+        "prepare": "npm run build"
     },
     "dependencies": {
         "ejson": "2.1.2",
-        "rxjs": "5.0.0-rc.5",
+        "rxjs": "^5.4.0",
         "underscore": "1.8.3",
         "@types/ejson": "2.1.2",
         "@types/underscore": "1.7.36"
@@ -42,7 +42,7 @@
         "mock-socket": "^6.0.4",
         "rimraf": "^2.5.4",
         "tslint": "^4.0.0",
-        "typescript": "2.1.4"
+        "typescript": "^2.3.0"
     },
     "ava": {
         "files": [

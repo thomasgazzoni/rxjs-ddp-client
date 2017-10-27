@@ -1,13 +1,13 @@
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/operator/take';
 
 import { DDP_COLLECTIONS } from './ddp-names';
 
 export declare abstract class DDPCacheEngine {
-    abstract get(key: string): Observable<any>;
-    abstract set(key: string, value: any);
-    abstract remove(key: string);
+    abstract getItem(key: string): Observable<any>;
+    abstract setItem(key: string, value: any);
+    abstract removeItem(key: string);
 }
 
 const STORAGE_KEY_LAST_SYNC_TIME = 'last_sync_time';
@@ -41,7 +41,7 @@ export class DDPStorage {
     setCacheEngine(cacheEngine: DDPCacheEngine) {
         this._cacheEngine = cacheEngine;
 
-        this._cacheEngine.get(STORAGE_KEY_LAST_SYNC_TIME)
+        this._cacheEngine.getItem(STORAGE_KEY_LAST_SYNC_TIME)
             .take(1)
             .subscribe(data => this._lastSyncTime = data);
     }
@@ -52,7 +52,7 @@ export class DDPStorage {
 
             this._checkAndInitCollection(collectionName);
 
-            this._cacheEngine.get(collectionName)
+            this._cacheEngine.getItem(collectionName)
                 .take(1)
                 .subscribe(data => {
                     this._collections[collectionName] = data || [];
@@ -68,22 +68,22 @@ export class DDPStorage {
 
             const data = this._getCollection(collectionName);
 
-            this._cacheEngine.set(collectionName, data);
+            this._cacheEngine.setItem(collectionName, data);
         });
 
         this._lastSyncTime = new Date();
-        this._cacheEngine.set(STORAGE_KEY_LAST_SYNC_TIME, this._lastSyncTime);
+        this._cacheEngine.setItem(STORAGE_KEY_LAST_SYNC_TIME, this._lastSyncTime);
     }
 
     clearCache(collectionsNames: Array<DDP_COLLECTIONS>) {
 
         this._lastSyncTime = undefined;
-        this._cacheEngine.remove(STORAGE_KEY_LAST_SYNC_TIME);
+        this._cacheEngine.removeItem(STORAGE_KEY_LAST_SYNC_TIME);
 
         collectionsNames.forEach(collectionName => {
             this._collections[collectionName] = [];
             this._subjects[collectionName].next(this._collections[collectionName]);
-            this._cacheEngine.remove(collectionName);
+            this._cacheEngine.removeItem(collectionName);
         });
 
     }

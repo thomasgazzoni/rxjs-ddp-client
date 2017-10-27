@@ -128,7 +128,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
             });
         };
 
-        this.socket.onerror = (error) => {
+        this.socket.onerror = (error: any) => {
             // error received before connection was established
             if (this._isConnecting) {
                 this._failed('Socket error happened before the connection', error);
@@ -296,7 +296,7 @@ export class DDPClient implements OnDDPMessage, OnDDPConnected, OnDDPDisconnecte
 
     protected callWithPromise(name: string, params) {
 
-        return new Promise((resolve, reject) => {
+        return new Promise<any>((resolve, reject) => {
             this.call(name, params, (error, result) => {
                 if (error) {
                     reject(error);

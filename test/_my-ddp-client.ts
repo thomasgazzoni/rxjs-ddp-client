@@ -1,5 +1,6 @@
 import { WebSocket } from 'mock-socket';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+
 import { DDPClient } from '../src/ddp-client';
 import { DDPCacheEngine } from '../src/ddp-storage';
 

@@ -1,16 +1,12 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "module": "commonjs",
+        "target": "ES5",
         "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "sourceMap": true,
-        "noEmitHelpers": false,
-        "noImplicitAny": false,
         "declaration": true,
-        "skipLibCheck": true,
-        "stripInternal": true,
         "lib": [
             "es6",
             "dom"

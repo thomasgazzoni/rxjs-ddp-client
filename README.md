@@ -19,15 +19,22 @@ Thi library works well together with:
  - Usign customizable storage system (minimongo-db or minimongo-cache dependencies are NOT required)
  - Access to collection's data by simple subscribe to Observable and use RxJs operators (map, zip, filter, etc) for querying
 
+## Install
+
+```sh
+npm install rxjs-ddp-client
+```
+
 ## Usage Exemple
 
- - Create a custom DDP class for your app logic
+ - First you need to create a custom DDPClient that will extend from the base class DDPClient (for example my-ddp-client.ts).
+ - In this custom DDPClient class you need to implement your DDP app logic (Collections names, DDP server url, etc)
 
 ```ts
 // my-ddp-client.ts
 import { Observable } from 'rxjs';
-import { DDPClient } from '../src/ddp-client';
-import { DDPCacheEngine } from '../src/ddp-storage';
+import { DDPClient } from 'rxjs-ddp-client';
+import { DDPCacheEngine } from 'rxjs-ddp-client';
 
 export type MY_DDP_COLLECTIONS = 'users' | 'chats';
 export const MY_DDP_COLLECTIONS = {
@@ -132,33 +139,65 @@ export class MyDDPClient extends DDPClient {
 }
 ```
 
- - Initialize your custom DDP class in your app main entry point
+ - Ultimatly you can initialize your custom DDP client in your app main entry point
+
+
+VanillaJS
 
 ```ts
 import { DDPCacheEngine } from 'rxjs-ddp-client';
-import { MyDDPClient } from './my-ddp-client';
+import { MyDDPClient } from 'rxjs-ddp-client';
 
 const myDDPClient = new MyDDPClient();
 
 // OPTION 1: Wrapper of LocalForage or any storage using Observable (methods must match to DDPCacheEngine interface)
-const _storageService : DDPCacheEngine = new MyLocalForageWrapper();
+// const _storageService : DDPCacheEngine = new MyLocalForageWrapper();
 
-// OPTION 2: if you use Angular 2 you could consider useing the StorageService of ng2-platform ([see ng2-platform repo](https://github.com/thomasgazzoni/ng2-platform))
-const _storageService : DDPCacheEngine = this._storageService;
+// OPTION 2: if you use Angular 2 you could consider using the StorageService of ng2-platform ([see ng2-platform repo](https://github.com/thomasgazzoni/ng2-platform))
+// const _storageService : DDPCacheEngine = this._storageService;
+
+// OPTION 3: use the localStorage of the browser direclty
+const _storageService : DDPCacheEngine = localStorage;
 
 
 myDDPClient.setCacheEngine(_storageService);
 myDDPClient.connect();
 ```
 
-## Install
+Angular 2+
+```ts
+import { Component } from '@angular/core';
+import { DDPCacheEngine } from 'rxjs-ddp-client';
+import { MyDDPClient } from './my-ddp-client';
 
-```sh
-npm install rxjs-ddp-client
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+
+export class AppComponent {
+  title = 'app';
+
+  constructor() {
+    this.init();
+  }
+
+  init() {
+
+    const myDDPClient = new MyDDPClient();
+
+    const _storageService: DDPCacheEngine = localStorage;
+
+    myDDPClient.initCacheStorage(_storageService);
+    myDDPClient.connect();
+  }
+}
+
 ```
 
 ## Todos
- - Write Tests
+ - Write more tests scenarios
 
 ## Thanks
  - Thanks to **oortcloud** for the node-ddp-client which formed the inspiration for this code.
