@@ -27,8 +27,8 @@ npm install rxjs-ddp-client
 
 ## Usage Exemple
 
- - First you need to create a custom DDPClient that will extend from the base class DDPClient (for example my-ddp-client.ts).
- - In this custom DDPClient class you need to implement your DDP app logic (Collections names, DDP server url, etc)
+ - First you need to create a custom DDPClient class that will extend from the base class DDPClient (for example the below file my-ddp-client.ts).
+ - In this custom DDPClient class you need to implement all your DDP app logic (Login, Collections names, DDP server url, etc)
 
 ```ts
 // my-ddp-client.ts
@@ -139,8 +139,8 @@ export class MyDDPClient extends DDPClient {
 }
 ```
 
- - rxjs-ddp-client comes with cache out of the box. To keep things flexible, you can use any cache system by implementing a class that has the methods required by ***DDPCacheEngine***.
- For example if you chose to use LocalStorage you need a class like this:
+ - rxjs-ddp-client comes with the data cache out of the box. To keep things flexible, you can use any cache system by implementing a class that has the methods required by ***DDPCacheEngine*** interface.
+ For example if you chose to use LocalStorage as cache engine you need a class like this:
 
  ```ts
  // my-ddp-cache-engine.ts
@@ -174,7 +174,7 @@ export class MyDDPCacheEngine implements DDPCacheEngine {
 
  ```
 
- - Ultimatly you can initialize your custom DDP client in your app main entry point
+ - Ultimately you can initialize your custom DDP client in your app main entry point
 
 
 VanillaJS
@@ -234,7 +234,7 @@ export class AppComponent {
 
 ```
 
-## Todos
+## Todo
  - Write more tests scenarios
 
 ## Thanks
