@@ -10,11 +10,11 @@ This is a simple WebSocket library for real time app like Chats, Notification, e
 - use RxJs to handle the collection items in Streams
 - customizable Cache options to persist and load data from cache
 
-Thi library works well together with:
+This library works well together with:
 
 - https://github.com/yjmade/django-ddp
 
-## Difference with Oortcloud/node-ddp-client
+## Difference with Oortcloud/node-ddp-client version
 
 - Code rewrite using ES6 and Typescript (add typings and interfaces)
 - Using customizable storage system (minimongo-db or minimongo-cache dependencies are NOT required)
@@ -24,6 +24,10 @@ Thi library works well together with:
 
 ```sh
 npm install rxjs-ddp-client
+
+or
+
+yarn add rxjs-ddp-client
 ```
 
 ## Usage Example
