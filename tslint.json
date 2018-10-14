@@ -17,12 +17,6 @@
       true,
       "always-prefix"
     ],
-    "member-ordering": [
-      true,
-      "public-before-private",
-      "constructor",
-      "variables-before-functions"
-    ],
     "indent": [
       true,
       "spaces"
@@ -45,10 +39,7 @@
     "no-bitwise": false,
     "no-shadowed-variable": true,
     "no-unused-expression": true,
-    "no-invalid-this": [
-      true,
-      "check-function-in-method"
-    ],
+    "no-invalid-this": false,
     "no-unused-variable": [
       false,
       {
